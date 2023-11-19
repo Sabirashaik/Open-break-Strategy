@@ -1,0 +1,75 @@
+import pandas as pd
+
+
+File= pd.read_csv('BANKNIFTY.csv', header=None)  
+
+
+File = File.iloc[:, :-1]
+
+File.columns = ['Name', 'Date', 'Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+buy_price = 0
+sell_price = 0
+stoploss = 0.005  # 0.5%
+position = False
+tradetaken = False
+tradeprice = 0
+profit = 0
+loss = 0
+
+
+for index, row in File.iterrows():
+    high_price = row['High']
+    low_price = row['Low']
+    close_price = row['Close']
+    time = row['Time']
+    
+    if time >= "09:15" and time <= "15:30":
+        if time == "09:15":
+            buy_price = high_price
+            sell_price = low_price
+
+        if time >= "09:15" and time <= "09:30":
+            if high_price > buy_price:
+                buy_price = high_price
+            if low_price < sell_price:
+                sell_price = low_price
+
+        if time > "09:30" and not position:
+            if high_price > buy_price:
+                tradeprice = high_price
+                position = True
+                tradetaken = True
+            elif low_price < sell_price:
+                tradeprice = low_price
+                position = True
+                tradetaken = True
+
+        if position and tradetaken and time >= "15:15":
+            if tradeprice * (1 - stoploss) > high_price or tradeprice * (1 + stoploss) < low_price:
+                if tradeprice == buy_price:
+                    trade_profit_loss = high_price - tradeprice
+                else:
+                    trade_profit_loss = tradeprice - low_price
+
+                if trade_profit_loss > 0:
+                    profit += trade_profit_loss
+                else:
+                    loss += trade_profit_loss
+
+                position = False 
+                tradetaken = False
+                tradeprice = 0
+            else:
+               
+                trade_profit_loss = tradeprice - close_price  
+                if trade_profit_loss > 0:
+                    profit += trade_profit_loss
+                else:
+                    loss += trade_profit_loss
+
+                position = False  
+                tradetaken = False
+                tradeprice = 0
+
+print("Total Profit for 2020: ", profit)
+print("Total Loss for 2020: ", abs(loss))
